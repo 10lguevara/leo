@@ -14,7 +14,7 @@ import random
 import sys
 import time
 
-BOARD_LENGTH = 30
+BOARD_LENGTH = 31
 
 # Chutes (negative) and ladders (positive) mapped by position
 TRACK_FEATURES = {
@@ -23,8 +23,12 @@ TRACK_FEATURES = {
     9: 7,   # ladder: go from 9 to 16
     14: -10, # chute: go from 14 to 4
     17: 5,  # ladder: go from 17 to 22
+    18: -4, # chute: go from 18 to 14
     21: -11, # chute: go from 21 to 10
+    23: -6, # chute: go from 23 to 17
     24: 6,  # ladder: go from 24 to 30
+    26: -8, # chute: go from 26 to 18
+    # Space 30 is a false finish that rewinds you to start.
 }
 
 INITIAL_SUPPLIES = 10
@@ -87,8 +91,9 @@ def apply_feature(position: int) -> int:
 
 
 def print_status(turn: int, position: int, health: int, supplies: int):
+    display_pos = min(position, 30)
     slow_print(f"\n=== Turn {turn} ===")
-    slow_print(f"Position: {position}/{BOARD_LENGTH}  |  Health: {health}  |  Supplies: {supplies}")
+    slow_print(f"Position: {display_pos}/30  |  Health: {health}  |  Supplies: {supplies}")
 
 
 def get_choice() -> tuple[str, str]:
@@ -270,9 +275,19 @@ def main():
                 health = 0
                 slow_print("A monstrous creature springs from the shadows at 25 and devours you!")
                 # skip further events; game_over will handle the end
+            elif position == 30:
+                slow_print("🎉 You reached space 30! It feels like a win… 🎉")
+                time.sleep(5)
+                slow_print("But suddenly the world blurs. You wake up from your illusion.")
+                slow_print("The trail breaks apart and you tumble back to the start. You must try again.")
+                position = 0
+                supplies = max(0, supplies - 2)
+                health = max(1, health - 1)
             elif position == 29:
                 health = 0
                 slow_print("The door just before the finish collapses and crushes you!")
+            elif position == BOARD_LENGTH:
+                slow_print("You find the true finish line at space 31! This time you have really won.")
             else:
                 position, health, supplies = encounter_event(position, health, supplies)
         else:
